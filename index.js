@@ -47,6 +47,21 @@ async function run() {
 			res.send(result);
 		});
 
+		app.put("/coffees/:id", async (req, res) => {
+			const id = req.params.id;
+			const filter = {
+				_id: new ObjectId(id),
+			};
+
+			const updatedCoffee = req.body;
+			const updateDoc = {
+				$set: updatedCoffee,
+			};
+			const options = { upsert: true };
+			const result = await coffeesCollection.updateOne(filter, updateDoc, options);
+			res.send(result);
+		});
+
 		app.delete("/coffees/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = {
