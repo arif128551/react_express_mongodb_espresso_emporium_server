@@ -1,6 +1,16 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./mern-espresso-emporium-client-firebase-adminsdk-fbsvc-1e299091af.json");
+
+if (!admin.apps.length) {
+	admin.initializeApp({
+		credential: admin.credential.cert(serviceAccount),
+	});
+}
+
 var express = require("express");
 var cors = require("cors");
 var app = express();
@@ -92,6 +102,24 @@ async function run() {
 			res.send(result);
 		});
 
+		app.delete("/firebase-users", async (req, res) => {
+			const { email } = req.body;
+
+			if (!email) {
+				return res.status(400).json({ success: false, message: "Email is required." });
+			}
+
+			try {
+				const userRecord = await admin.auth().getUserByEmail(email);
+				await admin.auth().deleteUser(userRecord.uid);
+				console.log("Firebase user deleted:", email);
+				res.status(200).json({ success: true, message: `Firebase user deleted: ${email}` });
+			} catch (error) {
+				console.error("Error deleting Firebase user:", error);
+				res.status(500).json({ success: false, message: error.message });
+			}
+		});
+
 		// Send a ping to confirm a successful connection
 		await client.db("admin").command({ ping: 1 });
 		console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -101,10 +129,6 @@ async function run() {
 	}
 }
 run().catch(console.dir);
-
-app.get("/", function (req, res, next) {
-	res.send("Hello world");
-});
 
 app.listen(port, function () {
 	console.log("CORS-enabled web server listening on port ", port);
