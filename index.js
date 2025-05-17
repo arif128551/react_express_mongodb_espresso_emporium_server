@@ -26,6 +26,7 @@ async function run() {
 
 		const coffeesDatabase = client.db("coffeeDB");
 		const coffeesCollection = coffeesDatabase.collection("coffees");
+		const usersCollection = coffeesDatabase.collection("users");
 
 		app.get("/coffees", async (req, res) => {
 			const result = await coffeesCollection.find().toArray();
@@ -68,6 +69,26 @@ async function run() {
 				_id: new ObjectId(id),
 			};
 			const result = await coffeesCollection.deleteOne(query);
+			res.send(result);
+		});
+
+		app.get("/users", async (req, res) => {
+			const result = await usersCollection.find().toArray();
+			res.send(result);
+		});
+
+		app.post("/users", async (req, res) => {
+			const newUser = req.body;
+			const result = await usersCollection.insertOne(newUser);
+			res.send(result);
+		});
+
+		app.delete("/users/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = {
+				_id: new ObjectId(id),
+			};
+			const result = await usersCollection.deleteOne(query);
 			res.send(result);
 		});
 
