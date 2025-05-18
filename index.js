@@ -1,5 +1,5 @@
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 var admin = require("firebase-admin");
 
@@ -31,7 +31,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
 	try {
-		await client.connect();
+		// await client.connect();
 
 		const coffeesDatabase = client.db("coffeeDB");
 		const coffeesCollection = coffeesDatabase.collection("coffees");
@@ -174,8 +174,8 @@ async function run() {
 		});
 
 		// Send a ping to confirm a successful connection
-		await client.db("admin").command({ ping: 1 });
-		console.log("Pinged your deployment. You successfully connected to MongoDB!");
+		// await client.db("admin").command({ ping: 1 });
+		// console.log("Pinged your deployment. You successfully connected to MongoDB!");
 	} finally {
 		// Ensures that the client will close when you finish/error
 		// await client.close();
@@ -183,6 +183,12 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.listen(port, function () {
-	console.log("CORS-enabled web server listening on port ", port);
+app.get("/", (req, res) => {
+	res.send("Server is live and working!");
 });
+
+// app.listen(port, function () {
+// 	console.log("CORS-enabled web server listening on port ", port);
+// });
+
+module.exports = app;
