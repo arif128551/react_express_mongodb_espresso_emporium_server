@@ -21,7 +21,6 @@ app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x7tmnab.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
 	serverApi: {
 		version: ServerApiVersion.v1,
@@ -88,9 +87,63 @@ async function run() {
 		});
 
 		app.post("/users", async (req, res) => {
-			const newUser = req.body;
-			const result = await usersCollection.insertOne(newUser);
+			const { email } = req.body;
+
+			if (!email) {
+				return res.status(400).send({ error: true, message: "Email is required" });
+			}
+
+			const existingUser = await usersCollection.findOne({ email });
+
+			if (existingUser) {
+				return res.status(200).send({ status: "existing" });
+			}
+
+			const result = await usersCollection.insertOne(req.body);
+
+			res.status(201).send({
+				status: "new",
+				insertedId: result.insertedId,
+			});
+		});
+
+		app.get("/users/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = {
+				_id: new ObjectId(id),
+			};
+			const result = await usersCollection.findOne(query);
 			res.send(result);
+		});
+
+		app.patch("/users/update/:id", async (req, res) => {
+			const id = req.params.id;
+
+			const filter = { _id: new ObjectId(id) };
+			const updateDoc = { $set: req.body };
+
+			const result = await usersCollection.updateOne(filter, updateDoc);
+
+			res.send(result);
+		});
+
+		app.patch("/users", async (req, res) => {
+			const { email, lastSignInTime } = req.body;
+
+			if (!email || !lastSignInTime) {
+				return res.status(400).send({ error: true, message: "Email and lastSignInTime required" });
+			}
+
+			const filter = { email };
+			const updateDoc = { $set: { lastSignInTime } };
+
+			const result = await usersCollection.updateOne(filter, updateDoc);
+
+			if (result.modifiedCount === 0) {
+				return res.status(404).send({ message: "User not found or time already same" });
+			}
+
+			res.send({ message: "Last sign-in time updated", modifiedCount: result.modifiedCount });
 		});
 
 		app.delete("/users/:id", async (req, res) => {
